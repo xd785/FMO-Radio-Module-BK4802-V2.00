@@ -10,6 +10,7 @@
 #include "led.h"
 #include "misc.h"
 #include "jumper.h"
+#include "boot.h"
 #include "wdt.h"
 #undef LOG_TAG
 #define LOG_TAG "MAIN"
@@ -116,13 +117,28 @@ void syncTask(void)
     log_w("AT requested system RESET, will reset after 1000ms");
     scheduleResetTime = millis() + 1000;
   }
+  else if (atCmd == E_AT_CMD_BOOTLOAD)
+  {
+    log_d("enter bootloader");
+    HAL_Delay(10);
+    vRunEnterBootloader();
+  }
 }
 
 extern void BK4802DebugTask(void);
-
+//uint32_t VECT_SRAM_TAB[48]__attribute__((section(".ARM.__at_0x20000000")));
+extern uint32_t VECT_SRAM_TAB[48];
 int main(void)
 {
+  vCheckBootArg();
   HAL_Init();
+  for (int i = 0; i < 48; i++)
+  {
+    VECT_SRAM_TAB[i] = *(__IO uint32_t *)(0x08002000 + (i<<2));
+  }
+
+  SCB->VTOR = SRAM_BASE;
+  
   miscInit();
   ledInit();
   HAL_Delay(1000);

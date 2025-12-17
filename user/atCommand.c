@@ -79,6 +79,9 @@
 #define AT_CMD_SYS "SYS"
 #define AT_CMD_SYS_RESET "RESET"
 
+// bootloader
+#define AT_CMD_BOOTLOAD "BOOTLOAD"
+
 // report command
 #define AT_CMD_OK "OK"
 
@@ -1035,6 +1038,17 @@ xBool ATCmdParse(ATCmdArgs *outArgs)
                 return xTrue;
             }
         }
+	//E_AT_CMD_BOOTLOAD
+        else if (xStringnCompare(&atCmdProcRaw[startIdx], AT_CMD_BOOTLOAD, xStringLen(AT_CMD_BOOTLOAD)) == true)
+        {
+            outArgs->cmd = E_AT_CMD_BOOTLOAD;
+            outArgs->result = E_AT_RESULT_OK;
+            outArgs->type = E_AT_CMD_TYPE_SET;
+            outArgs->args[0].argType = E_AT_CMD_ARG_TYPE_INVALID;
+            outArgs->argNum = 0;
+            log_d("enter bootloader");
+            return xTrue;
+        }
         // INVALID
         else
         {
@@ -1211,6 +1225,11 @@ xBool ATCmdArgsGetProc(ATCmdArgs *argsToBeProc, SHARECom *base)
         xStringnCopy(argsToBeProc->args[0].raw.strValue, AT_CMD_SYS_RESET, xStringLen(AT_CMD_SYS_RESET));
         return xTrue;
     }
+    else if (argsToBeProc->cmd == E_AT_CMD_BOOTLOAD)
+    {
+        log_d("enter bootloader command");
+        return xTrue;
+    }
     log_e("not support command");
     return xFalse;
 }
@@ -1336,6 +1355,11 @@ xBool ATCmdArgsSetProc(ATCmdArgs *argsToBeProc, SHARECom *base)
         fetchPut(E_AT_CMD_SYS);
         return xTrue;
     }
+    else if (argsToBeProc->cmd == E_AT_CMD_BOOTLOAD)
+    {
+        fetchPut(E_AT_CMD_BOOTLOAD);
+        return xTrue;
+    }
     return xFalse;
 }
 
@@ -1432,6 +1456,10 @@ xBool ATCmdSendResult(ATCmdArgs *inArgs)
         case E_AT_CMD_SYS:
             sendBufUsedLen = xStringLen(AT_CMD_SYS);
             xStringnCopy(sendBuf, AT_CMD_SYS, sendBufUsedLen);
+            break;
+	case E_AT_CMD_BOOTLOAD:
+            sendBufUsedLen = xStringLen(AT_CMD_BOOTLOAD);
+            xStringnCopy(sendBuf, AT_CMD_BOOTLOAD, sendBufUsedLen);
             break;
         default:
             break;
